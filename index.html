@@ -4,18 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+
 </head>
 <body>
 
     <form onsubmit="signUp(event)">
-        <label for="name">Enter Your Name:</label>
-        <input id="name" type="text" name="name" required>
-        <label for="email">Enter Email:</label>
-        <input id="email" type="email" name="email" required>
-        <label for="password">Enter Password:</label>
-        <input id="password" type="password" name="password" required>
+        
+        <label for="name">Enter Your Name:<i class="fa-solid fa-user"></i></label>
+        <input id="name" type="text" name="name" placeholder="name...">
+        <label for="email">Enter Email:<i class="fa-solid fa-envelope"></i></label>
+        <input id="email" type="email" name="email" autocomplete="username" placeholder="email..." required>
+        <label for="password">Enter Password:<i class="fa-solid fa-lock"></i></label>
+        <input id="password" type="password" name="password" autocomplete="current-password" placeholder="password..." required>
         <button type="submit">SignUp</button>
     </form>
-    
+    <script src="https://kit.fontawesome.com/24b1be4d2d.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
