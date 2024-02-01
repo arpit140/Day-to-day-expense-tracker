@@ -14,6 +14,7 @@ async function signUp(event) {
         })
 
         alert (response.data.message)
+        window.location.href = '../Login/login.html'
         document.getElementById('name').value = ''
         document.getElementById('email').value = ''    
         document.getElementById('password').value = ''

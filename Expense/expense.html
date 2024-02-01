@@ -1,0 +1,35 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Entry</title>
+    <link rel="stylesheet" href="">
+</head>
+<body>
+
+    <form onsubmit="submitExpense(event)">
+        <label for="amount">Money Spent:</label>
+        <input id="amount" type="number" name="amount" placeholder="Enter amount..." required>
+
+        <label for="description">Expense Description:</label>
+        <input id="description" type="text" name="description" placeholder="Enter description..." required>
+
+        <label for="category">Expense Category:</label>
+        <select id="category" name="category" required>
+            <option value="food">Food</option>
+            <option value="petrol">Petrol</option>
+            <option value="salary">Salary</option>
+           
+        </select>
+
+        <button type="submit">Submit Expense</button>
+    </form>
+    <div id="expenseContainer">
+        
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="./expense.js"></script>
+
+</body>
+</html>

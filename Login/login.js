@@ -9,8 +9,12 @@ async function login(event) {
             email: email,
             password: password
         })
-
+        localStorage.setItem('token', response.data.token)
         alert(response.data.message)
+
+        if(response.status === 200){
+            window.location.href = '../Expense/expense.html'
+        }
     }catch(error) {
         alert(error.response.data.error)
     }
