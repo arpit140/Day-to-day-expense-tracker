@@ -6,25 +6,33 @@ const Sequelize = require('sequelize')
 const jwt = require('jsonwebtoken')
 const Razorpay = require('razorpay')
 const uuid = require('uuid')
+const dotenv = require('dotenv')
+const helmet = require('helmet')
 // const sendinblue = require('sib-api-v3-sdk')
 const nodemailer = require('nodemailer')
 const app = express()
 const port = 4000
 
+dotenv.config()
 app.use(cors())
 app.use(bodyParser.json())
+
+app.use(helmet())
+
+
+
 const transporter = nodemailer.createTransport({
     service: 'smtp-relay.sendinblue.com', 
     auth: {
         user: 'arpitsunn6@gmail.com',
-        pass: 'xsmtpsib-e02f49227c481a99b273654b7e92ccfb7a421019a6aeebe6d558fae2fdf8ef47-Vz0gbJtakMTjLPSE',
+        pass: process.env.SENDINBLUE_API_KEY,
     },
 })
 
 
-const sequelize = new Sequelize ('expense-app', 'root', '7488552785aA@', {
-    host:'localhost',
-    dialect: 'mysql'
+const sequelize = new Sequelize (process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD,  {
+    host: process.env.DB_HOST,
+    dialect: process.env.DB_DIALECT,
 })
 
 const User = sequelize.define('user', {
