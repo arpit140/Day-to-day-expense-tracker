@@ -261,6 +261,26 @@ app.get('/check-premium-membership', verifyToken, async (req, res) => {
     }
 });
 
+app.get('/leaderboard', verifyToken, async (req, res) => {
+    try {
+        const leaderboard = await User.findAll({
+            attributes: ['name', [sequelize.fn('SUM', sequelize.col('expenses.amount')), 'totalExpenses']],
+            include: [{
+                model: Expense,
+                attributes: [],
+                where: { userId: sequelize.col('user.id') }
+            }],
+            group: ['user.id'],
+            order: [[sequelize.fn('SUM', sequelize.col('expenses.amount')), 'DESC']]
+        });
+
+        res.status(200).json({ leaderboard });
+    } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 app.listen(port,(err) => {
     if(err) {console.log("Error starting the server"),err}
     console.log("Server is running on port:",port)

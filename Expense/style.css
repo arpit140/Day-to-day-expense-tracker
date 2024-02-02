@@ -83,8 +83,41 @@ button:hover {
 
 .premium-membership button {
   padding: 10px;
-  background-color: #8B4513; /* Brown color */
+  background-color: #8B4513; 
   color: #FFF;
   border: none;
   cursor: pointer;
+}
+
+
+
+#leaderboardContainer {
+  margin-top: 20px;
+  border: 1px solid #6c5b7b;
+  padding: 10px;
+  background-color: #d4a5a5;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+#leaderboardContainer h2 {
+  margin-bottom: 10px;
+  color: #6c5b7b;
+}
+
+.leaderboard-item {
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: #fff6f6;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.leaderboard-item p {
+  margin: 5px 0;
+}
+
+.leaderboard-item hr {
+  border: 0.5px solid #ac8fc5;
+  margin: 10px 0;
 }

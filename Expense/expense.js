@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', async function () {
     await fetchAndDisplayExpenses()
     await checkPremiumMembershipStatus()
+    await fetchAndDisplayLeaderboard();
 })
 
 async function fetchAndDisplayExpenses() {
@@ -168,3 +169,38 @@ async function checkPremiumMembershipStatus() {
         console.error('Error checking premium membership status:', error);
     }
 }
+async function fetchAndDisplayLeaderboard() {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://localhost:4000/leaderboard', {
+            headers: {
+                Authorization: token
+            }
+        });
+
+        const leaderboardContainer = document.getElementById('leaderboardContainer');
+        leaderboardContainer.innerHTML = '';
+
+        const leaderboard = response.data.leaderboard;
+
+        if (!leaderboard || leaderboard.length === 0) {
+            leaderboardContainer.innerHTML = `<p>No leaderboard available.</p>`;
+        } else {
+            leaderboard.forEach((user, index) => {
+                const leaderboardElement = document.createElement('div');
+                leaderboardElement.classList.add('leaderboard-item');
+
+                leaderboardElement.innerHTML = `
+                    <p>${index + 1}. <strong>Name:</strong> ${user.name}, <strong>Total expenses:</strong> ${user.totalExpenses}</p>
+                `;
+
+                leaderboardContainer.appendChild(leaderboardElement);
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+        alert('An error occurred while fetching the leaderboard. Check the console for details.');
+    }
+}
+
+
