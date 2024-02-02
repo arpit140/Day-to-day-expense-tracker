@@ -4,6 +4,7 @@ const cors = require('cors')
 const bcrypt = require('bcrypt')
 const Sequelize = require('sequelize')
 const jwt = require('jsonwebtoken')
+const Razorpay = require('razorpay')
 const app = express()
 const port = 4000
 
@@ -47,9 +48,25 @@ const Expense = sequelize.define('expense', {
     }
 })
 
+const Order = sequelize.define('order',{
+
+    orderId: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        unique: true
+    },
+    status: {
+        type: Sequelize.STRING,
+        allowNull: false
+    }
+})
+
 
 User.hasMany(Expense)
 Expense.belongsTo(User)
+User.hasMany(Order)
+Order.belongsTo(User)
+
 
 User.prototype.validPassword = async function (password) {
     return await bcrypt.compare(password, this.password)
@@ -181,6 +198,69 @@ app.delete('/delete-expense/:id', verifyToken, async (req,res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 })
+
+const razorpay = new Razorpay({
+    key_id: "rzp_test_phG2IB5y8EJQCw",
+    key_secret: "VYNrF0ac1uleN4TIwuNz04v6"
+})
+
+app.post('/create-razorpay-order', verifyToken , async (req,res) => {
+    try{
+        const {amount, currency} =req.body
+
+        const orderOptions = {
+            amount: amount,
+            currency: currency,
+            receipt: 'Premium_membership' + Date.now(),
+            payment_capture: 1
+        }
+        const order = await razorpay.orders.create(orderOptions)
+        const newOrder = await Order.create({
+            orderId: order.id,
+            status: 'CREATED',
+            userId: req.user.id
+        })
+        res.status(200).json({orderId: order.id})
+    }catch (error) {
+        console.error('Error creating Razorpay order:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+
+})
+app.post('/razorpay-payment-success', async (req, res) => {
+    try {
+        const orderId = req.body.razorpay_order_id;
+
+        const order = await Order.findOne({ where: { orderId: orderId } });
+
+        if (order) {
+            
+            await order.update({ status: 'SUCCESSFUL' });
+
+            
+            const user = await User.findByPk(req.user.id);
+            await user.update({ isPremium: true });
+
+            res.status(200).json({ message: 'Payment successful' });
+        } else {
+            console.error('Order not found in the database');
+            res.status(404).json({ error: 'Order not found' });
+        }
+    } catch (error) {
+        console.error('Error updating order status:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+app.get('/check-premium-membership', verifyToken, async (req, res) => {
+    try {
+        const user = await User.findByPk(req.user.id);
+        res.status(200).json({ isPremium: user.isPremium || false });
+    } catch (error) {
+        console.error('Error checking premium membership status:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 app.listen(port,(err) => {
     if(err) {console.log("Error starting the server"),err}
     console.log("Server is running on port:",port)

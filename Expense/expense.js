@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', async function () {
     await fetchAndDisplayExpenses()
+    await checkPremiumMembershipStatus()
 })
 
 async function fetchAndDisplayExpenses() {
@@ -95,5 +96,75 @@ async function deleteExpense(expenseId){
     }catch (error) {
         console.error('Error deleting expense:', error)
         alert('An error occurred while deleting the expense. Check the console for details.')
+    }
+}
+
+async function buyPremiumMembership(){
+    try{
+        const token = localStorage.getItem('token')
+        const response = await axios.post('http://localhost:4000/create-razorpay-order',{
+            amount: 100,
+            currency: 'INR',
+
+        },{
+            headers:{
+                Authorization: token,
+            }
+        })
+        const orderId = response.data.orderId
+
+        const options = {
+            key: 'rzp_test_phG2IB5y8EJQCw',
+            amount: 1,
+            currency: 'INR',
+            order_id: orderId,
+            name:'Arpit',
+            description: 'Premium Membership',
+            handler: function (response) {
+                console.log("Razorpay Response:", response);
+            
+                // Check for the existence of razorpay_payment_id to determine payment success
+                if (response?.razorpay_payment_id) {
+                    document.getElementById('buyPremiumBtn').style.display = 'none';
+                    document.getElementById('premiumMessage').style.display = 'block';
+                } else {
+                    console.error("Payment failed or status undefined:", response);
+                }
+            }
+
+        }
+        const rzp = new Razorpay(options)
+        rzp.open()
+    }catch (error) {
+        console.error('Error creating Razorpay order:', error);
+        alert('An error occurred while processing the payment. Please try again.');
+    }
+}
+async function checkPremiumMembershipStatus() {
+    try {
+        const token = localStorage.getItem('token');
+        console.log('Token:', token);
+
+        const response = await axios.get('http://localhost:4000/check-premium-membership', {
+            headers: {
+                Authorization: token,
+            },
+        });
+
+        console.log('Premium Membership Check Response:', response.data);
+
+        const isPremium = response.data.isPremium;
+
+        if (isPremium) {
+            console.log('User is premium. Hiding button.');
+            document.getElementById('buyPremiumBtn').style.display = 'none';
+            document.getElementById('premiumMessage').style.display = 'block';
+        } else {
+            console.log('User is not premium. Showing button.');
+            document.getElementById('buyPremiumBtn').style.display = 'block';
+            document.getElementById('premiumMessage').style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error checking premium membership status:', error);
     }
 }
