@@ -5,11 +5,21 @@ const bcrypt = require('bcrypt')
 const Sequelize = require('sequelize')
 const jwt = require('jsonwebtoken')
 const Razorpay = require('razorpay')
+const uuid = require('uuid')
+// const sendinblue = require('sib-api-v3-sdk')
+const nodemailer = require('nodemailer')
 const app = express()
 const port = 4000
 
 app.use(cors())
 app.use(bodyParser.json())
+const transporter = nodemailer.createTransport({
+    service: 'smtp-relay.sendinblue.com', 
+    auth: {
+        user: 'arpitsunn6@gmail.com',
+        pass: 'xsmtpsib-e02f49227c481a99b273654b7e92ccfb7a421019a6aeebe6d558fae2fdf8ef47-Vz0gbJtakMTjLPSE',
+    },
+})
 
 
 const sequelize = new Sequelize ('expense-app', 'root', '7488552785aA@', {
@@ -60,12 +70,26 @@ const Order = sequelize.define('order',{
         allowNull: false
     }
 })
-
+const ForgotPasswordRequest = sequelize.define('forgotPasswordRequest', {
+    id: {
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4,
+        primaryKey: true,
+    },
+    isActive: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+    },
+})
 
 User.hasMany(Expense)
 Expense.belongsTo(User)
 User.hasMany(Order)
 Order.belongsTo(User)
+User.hasMany(ForgotPasswordRequest)
+ForgotPasswordRequest.belongsTo(User)
+
 
 
 User.prototype.validPassword = async function (password) {
@@ -167,15 +191,15 @@ app.post('/submit-expense',verifyToken, async(req,res) => {
 })
 app.get('/fetch-expenses', verifyToken, async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user.id
         const userExpenses = await Expense.findAll({
             where: { userId: userId }
         });
 
-        res.status(200).json({ expenses: userExpenses });
+        res.status(200).json({ expenses: userExpenses })
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error(error)
+        res.status(500).json({ error: 'Internal server error' })
     }
 });
 app.delete('/delete-expense/:id', verifyToken, async (req,res) => {
@@ -195,7 +219,7 @@ app.delete('/delete-expense/:id', verifyToken, async (req,res) => {
 
     }catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Internal server error' })
     }
 })
 
@@ -222,33 +246,33 @@ app.post('/create-razorpay-order', verifyToken , async (req,res) => {
         })
         res.status(200).json({orderId: order.id})
     }catch (error) {
-        console.error('Error creating Razorpay order:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Error creating Razorpay order:', error)
+        res.status(500).json({ error: 'Internal server error' })
     }
 
 })
 app.post('/razorpay-payment-success', async (req, res) => {
     try {
-        const orderId = req.body.razorpay_order_id;
+        const orderId = req.body.razorpay_order_id
 
-        const order = await Order.findOne({ where: { orderId: orderId } });
+        const order = await Order.findOne({ where: { orderId: orderId } })
 
         if (order) {
             
-            await order.update({ status: 'SUCCESSFUL' });
+            await order.update({ status: 'SUCCESSFUL' })
 
             
-            const user = await User.findByPk(req.user.id);
-            await user.update({ isPremium: true });
+            const user = await User.findByPk(req.user.id)
+            await user.update({ isPremium: true })
 
-            res.status(200).json({ message: 'Payment successful' });
+            res.status(200).json({ message: 'Payment successful' })
         } else {
-            console.error('Order not found in the database');
-            res.status(404).json({ error: 'Order not found' });
+            console.error('Order not found in the database')
+            res.status(404).json({ error: 'Order not found' })
         }
     } catch (error) {
-        console.error('Error updating order status:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Error updating order status:', error)
+        res.status(500).json({ error: 'Internal server error' })
     }
 });
 app.get('/check-premium-membership', verifyToken, async (req, res) => {
@@ -256,8 +280,8 @@ app.get('/check-premium-membership', verifyToken, async (req, res) => {
         const user = await User.findByPk(req.user.id);
         res.status(200).json({ isPremium: user.isPremium || false });
     } catch (error) {
-        console.error('Error checking premium membership status:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Error checking premium membership status:', error)
+        res.status(500).json({ error: 'Internal server error' })
     }
 });
 
@@ -274,13 +298,39 @@ app.get('/leaderboard', verifyToken, async (req, res) => {
             order: [[sequelize.fn('SUM', sequelize.col('expenses.amount')), 'DESC']]
         });
 
-        res.status(200).json({ leaderboard });
+        res.status(200).json({ leaderboard })
     } catch (error) {
-        console.error('Error fetching leaderboard:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Error fetching leaderboard:', error)
+        res.status(500).json({ error: 'Internal server error' })
     }
 });
+app.post('/password/forgotpassword', async (req, res) => {
+    try {
+        const userEmail = req.body.email
 
+        const user = await User.findOne({ where: { email: userEmail } })
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' })
+        }
+
+       
+        const forgotPasswordRequest = await ForgotPasswordRequest.create({ userId: user.id })
+
+    
+        const mailOptions = {
+            from: 'YOUR_EMAIL',
+            to: userEmail,
+            subject: 'Password Reset',
+            text: `Here is your password reset link: YOUR_RESET_LINK/${forgotPasswordRequest.id}`,
+        }
+
+        res.status(200).json({ message: 'Password reset email sent successfully' })
+    } catch (error) {
+        console.error('Error sending reset password email:', error)
+        res.status(500).json({ error: 'Internal server error' })
+    }
+})
 app.listen(port,(err) => {
     if(err) {console.log("Error starting the server"),err}
     console.log("Server is running on port:",port)

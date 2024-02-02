@@ -20,3 +20,37 @@ async function login(event) {
     }
     
 }
+
+function forgotPassword(){
+    const formContainer = document.createElement('div')
+
+    formContainer.innerHTML= `
+    <form id="forgotPasswordForm">
+        <label for="email">Enter your email:</label>
+        <input type="email" id="email" name="email" required>
+        <button type="button" onclick="submitForgotPasswordForm()">Submit</button>
+    </form>
+`
+    document.body.appendChild(formContainer)
+}
+
+function submitForgotPasswordForm() {
+    const userEmail = document.getElementById('email').value
+    if(userEmail){
+        axios.post('http://your-backend-url/password/forgotpassword',{email:userEmail})
+            .then(response => {
+                alert(response.data.message)
+
+                const formContainer = document.getElementById('forgotPasswordForm')
+                formContainer.parentNode.removeChild(formContainer)
+            })
+            .catch(error => {
+                console.error('Error submitting forgot password form:', error)
+                alert('An error occurred. Please try again.')
+            })
+
+    } else {
+        alert("please enter a valid eamil.")
+    }
+       
+}
