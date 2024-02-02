@@ -331,6 +331,77 @@ app.post('/password/forgotpassword', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' })
     }
 })
+
+app.get('/fetch-daily-transactions', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const startDate = new Date();
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date();
+        endDate.setHours(23, 59, 59, 999);
+
+        const dailyTransactions = await fetchTransactions(userId, startDate, endDate);
+
+        res.status(200).json({ transactions: dailyTransactions });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+app.get('/fetch-weekly-transactions', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - startDate.getDay()); 
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + (6 - endDate.getDay())); 
+        endDate.setHours(23, 59, 59, 999);
+
+        const weeklyTransactions = await fetchTransactions(userId, startDate, endDate);
+
+        res.status(200).json({ transactions: weeklyTransactions });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+app.get('/fetch-monthly-transactions', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const startDate = new Date();
+        startDate.setDate(1); 
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date();
+        endDate.setMonth(endDate.getMonth() + 1, 0); 
+        endDate.setHours(23, 59, 59, 999);
+
+        const monthlyTransactions = await fetchTransactions(userId, startDate, endDate);
+
+        res.status(200).json({ transactions: monthlyTransactions });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+async function fetchTransactions(userId, startDate, endDate) {
+    const transactions = await Expense.findAll({
+        where: {
+            userId: userId,
+            createdAt: {
+                [Sequelize.Op.between]: [startDate, endDate],
+            },
+        },
+    });
+    return transactions;
+}
+
 app.listen(port,(err) => {
     if(err) {console.log("Error starting the server"),err}
     console.log("Server is running on port:",port)

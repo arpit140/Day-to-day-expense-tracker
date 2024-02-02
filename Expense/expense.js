@@ -204,3 +204,27 @@ async function fetchAndDisplayLeaderboard() {
 }
 
 
+async function fetchTransactionsByInterval(interval) {
+    try {
+        const response = await axios.get(`/fetch-${interval.toLowerCase()}-transactions`, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+        });
+        const transactions = response.data.transactions;
+        
+        displayTransactions(transactions);
+    } catch (error) {
+        console.error('Error fetching transactions:', error);
+    }
+}
+
+
+fetchTransactionsByInterval('Daily');
+
+
+function displayTransactions(transactions) {
+   
+    console.log('Displaying transactions:', transactions);
+}
+
