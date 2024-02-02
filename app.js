@@ -388,19 +388,28 @@ app.get('/fetch-monthly-transactions', verifyToken, async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+app.get('/fetch-paginated-expenses', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const page = req.query.page || 1;
+        const pageSize = 10; 
 
+        const offset = (page - 1) * pageSize;
 
-async function fetchTransactions(userId, startDate, endDate) {
-    const transactions = await Expense.findAll({
-        where: {
-            userId: userId,
-            createdAt: {
-                [Sequelize.Op.between]: [startDate, endDate],
-            },
-        },
-    });
-    return transactions;
-}
+        const paginatedExpenses = await Expense.findAll({
+            where: { userId: userId },
+            offset: offset,
+            limit: pageSize,
+            order: [['createdAt', 'DESC']], 
+        });
+
+        res.status(200).json({ expenses: paginatedExpenses });
+    } catch (error) {
+        console.error('Error fetching paginated expenses:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 
 app.listen(port,(err) => {
     if(err) {console.log("Error starting the server"),err}
